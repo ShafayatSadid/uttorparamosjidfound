@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/shared/Navbar"; // নতুন ইমপোর্ট
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,10 +17,11 @@ export default function RootLayout({
   return (
     <html lang="bn">
       <body className={`${inter.className} bg-white text-[#0a192f] antialiased`}>
-        <Navbar /> {/* Navbar এখানে বসানো হলো */}
+
         <main className="min-h-[calc(100vh-4rem)]">
           {children}
         </main>
+
       </body>
     </html>
   );
