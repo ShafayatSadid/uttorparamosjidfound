@@ -6,8 +6,8 @@ import Navbar from "@/components/shared/Navbar"; // নতুন ইমপোর
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "উত্তরপাড়া মসজিদ | হিসাব নিকাশ",
-  description: "মসজিদের যাবতীয় হিসাব নিকাশ ও ফান্ড ম্যানেজমেন্ট সিস্টেম",
+  title: "ভায়াবহ উত্তরপাড়া জামে মসজিদ",
+  description: "মসজিদের যাবতীয় হিসাব নিকাশ ও ফান্ড ম্যানেজমেন্ট সিস্টেম - ভায়াবহ, মল্লিকবাড়ী-২২৪০, ভালুকা, ময়মনসিংহ।",
 };
 
 export default function RootLayout({

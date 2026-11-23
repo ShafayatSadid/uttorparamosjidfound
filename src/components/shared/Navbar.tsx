@@ -39,7 +39,7 @@ export default function Navbar() {
 
   // Better Auth সেশন হুক
   const { data: session, isPending } = authClient.useSession();
-  
+
   // any ছাড়া টাইপ সেফ চেক
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
@@ -55,14 +55,14 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/10 bg-primary text-primary-foreground shadow-md">
       <nav className="container mx-auto relative flex h-16 items-center justify-between px-4 md:px-6">
-        
+
         {/* Left Side: Logo */}
         <div className="flex items-center">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="text-lg md:text-xl font-bold tracking-wide hover:text-accent transition-colors"
           >
-            উত্তরপাড়া মসজিদ
+            ভায়াবহ উত্তরপাড়া জামে মসজিদ
           </Link>
         </div>
 
@@ -86,7 +86,7 @@ export default function Navbar() {
 
         {/* Right Side: Auth & Mobile Menu */}
         <div className="flex items-center gap-2">
-          
+
           <div className="hidden md:flex items-center gap-4">
             {isPending ? (
               <div className="h-9 w-9 animate-pulse rounded-full bg-primary-foreground/20" />
@@ -118,21 +118,21 @@ export default function Navbar() {
                         </div>
                       </div>
                     </DropdownMenuLabel>
-                    
+
                     <DropdownMenuSeparator className="mb-1" />
 
                     {isAdmin && (
-                      <DropdownMenuItem 
-                        onClick={() => router.push("/hisab")} 
+                      <DropdownMenuItem
+                        onClick={() => router.push("/hisab")}
                         className="cursor-pointer rounded-lg py-2.5 focus:bg-primary/10 focus:text-primary transition-colors"
                       >
                         <LayoutDashboard className="mr-2 size-4" />
                         <span className="font-medium">হিসাব নিকাশ</span>
                       </DropdownMenuItem>
                     )}
-                    
-                    <DropdownMenuItem 
-                      onClick={handleSignOut} 
+
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
                       className="cursor-pointer rounded-lg py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive transition-colors mt-1"
                     >
                       <LogOut className="mr-2 size-4" />
@@ -142,10 +142,10 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }), 
+                  buttonVariants({ variant: "outline", size: "sm" }),
                   "rounded-full px-6 border-accent text-accent hover:bg-accent hover:text-primary transition-all bg-transparent"
                 )}
               >
@@ -214,7 +214,7 @@ export default function Navbar() {
                             হিসাব নিকাশ
                           </Link>
                         )}
-                        
+
                         <Button
                           variant="destructive"
                           size="sm"
