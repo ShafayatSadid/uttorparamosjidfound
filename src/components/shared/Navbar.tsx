@@ -123,7 +123,7 @@ export default function Navbar() {
 
                     {isAdmin && (
                       <DropdownMenuItem
-                        onClick={() => router.push("/hisab")}
+                        onClick={() => router.push("/admin")}
                         className="cursor-pointer rounded-lg py-2.5 focus:bg-primary/10 focus:text-primary transition-colors"
                       >
                         <LayoutDashboard className="mr-2 size-4" />
