@@ -32,7 +32,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message || "লগইন ব্যর্থ হয়েছে। ইমেইল বা পাসওয়ার্ড চেক করুন।");
       } else {
-        router.push("/hisab");
+        router.push("/");
         router.refresh();
       }
     } catch (err) {

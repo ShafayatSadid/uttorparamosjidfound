@@ -206,12 +206,12 @@ export default function Navbar() {
 
                         {isAdmin && (
                           <Link
-                            href="/hisab"
+                            href="/admin"
                             onClick={closeSheet}
                             className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "w-full justify-start gap-2 rounded-lg bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20")}
                           >
                             <LayoutDashboard className="size-4" />
-                            হিসাব নিকাশ
+                            Admin Panel 
                           </Link>
                         )}
 

@@ -34,7 +34,7 @@ export default function RegisterPage() {
             if (error) {
                 setError(error.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে। (সাইনআপ বন্ধ থাকতে পারে)");
             } else {
-                router.push("/hisab");
+                router.push("/");
                 router.refresh();
             }
         } catch (err) {

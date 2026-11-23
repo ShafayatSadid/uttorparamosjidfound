@@ -13,14 +13,14 @@ import {
 import { cn } from "@/lib/utils";
 
 const sidebarItems = [
-  { name: "ওভারভিউ", href: "/hisab", icon: LayoutDashboard },
-  { name: "ব্যক্তিভিত্তিক", href: "/hisab/persons", icon: Users },
-  { name: "সাপ্তাহিক", href: "/hisab/weekly", icon: CalendarDays },
-  { name: "বিবিধ দান", href: "/hisab/misc", icon: HeartHandshake },
-  { name: "প্রিন্ট/রিপোর্ট", href: "/hisab/reports", icon: FileText },
+  { name: "ওভারভিউ", href: "/admin", icon: LayoutDashboard },
+  { name: "ব্যক্তিভিত্তিক", href: "/admin/persons", icon: Users },
+  { name: "সাপ্তাহিক", href: "/admin/weekly", icon: CalendarDays },
+  { name: "বিবিধ দান", href: "/admin/misc", icon: HeartHandshake },
+  { name: "প্রিন্ট/রিপোর্ট", href: "/admin/reports", icon: FileText },
 ];
 
-export default function HisabLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
