@@ -43,6 +43,8 @@ interface Contribution {
 }
 
 export default function AdminPersonsPage() {
+
+
   // স্টেটসমূহ (any বাদ দিয়ে সঠিক ইন্টারফেস ব্যবহার)
   const [persons, setPersons] = useState<Person[]>([]);
   const [fundTypes, setFundTypes] = useState<FundType[]>([]);
@@ -62,12 +64,20 @@ export default function AdminPersonsPage() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loadingContributions, setLoadingContributions] = useState(false);
 
+
   // টাকা জমা ফর্ম স্টেট
   const [payFundType, setPayFundType] = useState("");
   const [payAmount, setPayAmount] = useState("");
-  const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
+  const [payDate, setPayDate] = useState("");
   const [payReceipt, setPayReceipt] = useState("");
   const [isPaying, setIsPaying] = useState(false);
+
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const timer = setTimeout(() => setPayDate(today), 0);
+    return () => clearTimeout(timer); // ক্লিনআপ
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -196,12 +206,12 @@ export default function AdminPersonsPage() {
           <h1 className="text-2xl font-bold text-primary">ব্যক্তিভিত্তিক হিসাব</h1>
           <p className="text-muted-foreground text-sm mt-1">দাতা ও এলাকাবাসীর তালিকা এবং তাদের নির্ধারিত চাঁদা।</p>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger render={<Button onClick={handleOpenDialog} className="bg-primary text-white" />}>
             <Plus className="mr-2 h-4 w-4" /> নতুন ব্যক্তি
           </DialogTrigger>
-          
+
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>নতুন ব্যক্তি যোগ করুন</DialogTitle>
@@ -303,10 +313,10 @@ export default function AdminPersonsPage() {
                         <TableCell className="text-right font-medium text-green-600">{formatTk(person.totalPaid || 0)}</TableCell>
                         <TableCell className="text-right font-bold text-red-500">{formatTk(person.totalDue || 0)}</TableCell>
                         <TableCell className="text-right">
-                          <Button 
+                          <Button
                             onClick={() => handleOpenDetails(person)}
-                            variant="outline" 
-                            size="sm" 
+                            variant="outline"
+                            size="sm"
                             className="border-accent text-primary hover:bg-accent hover:text-white"
                           >
                             বিস্তারিত
@@ -331,7 +341,7 @@ export default function AdminPersonsPage() {
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-            
+
             {/* বাম দিক: ফান্ড সামারি ও টাকা জমার ফর্ম */}
             <div className="space-y-6">
               {/* ফান্ড সামারি */}
@@ -341,7 +351,7 @@ export default function AdminPersonsPage() {
                   const fundName = selectedPerson.fundTypeDetails?.find((ft) => ft._id === f.fundTypeId)?.name || "ফান্ড";
                   const fundPaid = contributions.filter(c => c.fundTypeId === f.fundTypeId).reduce((sum, c) => sum + c.amount, 0);
                   const fundDue = f.assignedAmount - fundPaid;
-                  
+
                   return (
                     <div key={f._id} className="text-sm border-b pb-2 last:border-0">
                       <div className="font-semibold text-primary">{fundName}</div>
@@ -412,9 +422,9 @@ export default function AdminPersonsPage() {
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">রসিদ: {c.receiptNo}</p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-6 w-6 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleDeleteContribution(c._id)}
                         >

@@ -124,19 +124,19 @@ export default function Navbar() {
                     {isAdmin && (
                       <DropdownMenuItem
                         onClick={() => router.push("/admin")}
-                        className="cursor-pointer rounded-lg py-2.5 focus:bg-primary/10 focus:text-primary transition-colors"
+                        className="cursor-pointer rounded-lg py-2.5 text-primary"
                       >
                         <LayoutDashboard className="mr-2 size-4" />
-                        <span className="font-medium">হিসাব নিকাশ</span>
+                        <span className="font-medium">Admin Panel</span>
                       </DropdownMenuItem>
                     )}
 
                     <DropdownMenuItem
                       onClick={handleSignOut}
-                      className="cursor-pointer rounded-lg py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive transition-colors mt-1"
+                      className="cursor-pointer rounded-lg py-2.5 text-red-500"
                     >
                       <LogOut className="mr-2 size-4" />
-                      <span className="font-medium">লগ আউট</span>
+                      <span className="font-medium text-red-500">লগ আউট</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
