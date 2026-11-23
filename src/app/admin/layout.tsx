@@ -1,14 +1,16 @@
 "use client";
 
+
+
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { 
-  LayoutDashboard, 
-  Users, 
-  CalendarDays, 
-  HeartHandshake, 
-  FileText, 
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  Users,
+  CalendarDays,
+  HeartHandshake,
+  FileText,
   ArrowLeft,
   Menu
 } from "lucide-react";
@@ -21,6 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { authClient } from "@/lib/auth-client";
 
 const sidebarItems = [
   { name: "ওভারভিউ", href: "/admin", icon: LayoutDashboard },
@@ -31,7 +34,7 @@ const sidebarItems = [
   { name: "প্রিন্ট/রিপোর্ট", href: "/admin/reports", icon: FileText },
 ];
 
-// ✅ কম্পোনেন্টটা এখন AdminLayout-এর বাইরে
+
 interface SidebarContentProps {
   pathname: string;
   onClose?: () => void;
@@ -44,12 +47,12 @@ function SidebarContent({ pathname, onClose }: SidebarContentProps) {
         <h2 className="text-xl font-bold text-accent">হিসাব নিকাশ</h2>
         <p className="text-xs text-primary-foreground/60 mt-1">অ্যাডমিন প্যানেল</p>
       </div>
-      
+
       <nav className="flex-1 p-4 space-y-2">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
-          
+
           return (
             <Link
               key={item.name}
@@ -57,8 +60,8 @@ function SidebarContent({ pathname, onClose }: SidebarContentProps) {
               onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                isActive 
-                  ? "bg-accent text-primary" 
+                isActive
+                  ? "bg-accent text-primary"
                   : "hover:bg-primary-foreground/10 text-primary-foreground/80 hover:text-white"
               )}
             >
@@ -70,8 +73,8 @@ function SidebarContent({ pathname, onClose }: SidebarContentProps) {
       </nav>
 
       <div className="p-4 border-t border-primary-foreground/10">
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           onClick={onClose}
           className="flex items-center gap-2 text-sm text-primary-foreground/60 hover:text-accent transition-colors"
         >
@@ -83,16 +86,47 @@ function SidebarContent({ pathname, onClose }: SidebarContentProps) {
   );
 }
 
-// ✅ মেইন লেআউট
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+
+  const router = useRouter();
   const pathname = usePathname();
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  const role = (session?.user as { role?: string })?.role;
+
+  // ── Auth + role guard ──
+  useEffect(() => {
+    if (isPending) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
+    if (!role) {
+      router.replace("/");
+      return;
+    }
+
+    if (role !== "admin") {
+      router.replace("/");
+      return;
+    }
+  }, [user, isPending, router, pathname,role]);
+
+  // route change → drawer close
+  useEffect(() => {
+
+  }, [pathname]);
+
+
   const [open, setOpen] = useState(false);
 
   const closeSheet = () => setOpen(false);
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] bg-slate-50">
-      
+
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-primary text-primary-foreground hidden md:flex flex-col shadow-lg z-10">
         <SidebarContent pathname={pathname} />
@@ -103,9 +137,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
             render={
-              <Button 
-                size="icon" 
-                className="h-14 w-14 rounded-full shadow-xl bg-primary text-accent hover:bg-primary/90 hover:text-accent" 
+              <Button
+                size="icon"
+                className="h-14 w-14 rounded-full shadow-xl bg-primary text-accent hover:bg-primary/90 hover:text-accent"
               />
             }
           >
