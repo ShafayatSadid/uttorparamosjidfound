@@ -12,7 +12,8 @@ import {
   HeartHandshake,
   FileText,
   ArrowLeft,
-  Menu
+  Menu,
+  Receipt
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const sidebarItems = [
   { name: "কমিটি/উপদেষ্টা/সদস্য ", href: "/admin/members", icon: Users },
   { name: "সাপ্তাহিক", href: "/admin/weekly", icon: CalendarDays },
   { name: "বিবিধ দান", href: "/admin/misc", icon: HeartHandshake },
+  { name: "খরচের হিসাব", href: "/admin/expenses", icon: Receipt },
   { name: "প্রিন্ট/রিপোর্ট", href: "/admin/reports", icon: FileText },
 ];
 

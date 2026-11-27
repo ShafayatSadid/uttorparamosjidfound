@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Wallet, AlertCircle, TrendingUp, Loader2 } from "lucide-react";
+import { Users, Wallet, AlertCircle, TrendingUp, Loader2, Receipt } from "lucide-react";
 
 interface DashboardSummary {
   totalPersons: number;
@@ -13,6 +13,8 @@ interface DashboardSummary {
   totalWeekly: number;
   totalMisc: number;
   grandTotalCollection: number;
+  totalExpenses: number;
+  currentBalance: number;
 }
 
 export default function HisabOverviewPage() {
@@ -55,7 +57,7 @@ export default function HisabOverviewPage() {
 
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
+
         <Card className="bg-white border-primary/10 shadow-sm">
           <CardContent className="p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -100,7 +102,7 @@ export default function HisabOverviewPage() {
 
       {/* Category Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-         <Card className="bg-white border-primary/10 shadow-sm">
+        <Card className="bg-white border-primary/10 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-primary">সাপ্তাহিক আদায়</CardTitle>
           </CardHeader>
@@ -127,6 +129,26 @@ export default function HisabOverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-white border-primary/10 shadow-sm">
+          <CardContent className="p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">মোট খরচ</span>
+              <div className="p-2 bg-red-100 rounded-md"><Receipt className="h-4 w-4 text-red-600" /></div>
+            </div>
+            <div className="text-2xl font-bold text-red-600">{formatTk(data?.totalExpenses || 0)}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary text-white border-none shadow-md">
+          <CardContent className="p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-primary-foreground/80">বর্তমান ব্যালেন্স</span>
+              <div className="p-2 bg-white/10 rounded-md"><Wallet className="h-4 w-4 text-accent" /></div>
+            </div>
+            <div className="text-2xl font-bold text-accent">{formatTk(data?.currentBalance || 0)}</div>
+          </CardContent>
+        </Card>
 
     </div>
   );
