@@ -24,8 +24,14 @@ export default function AdminWeeklyPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ফর্ম স্টেট
-    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+    const [date, setDate] = useState("");
     const [amount, setAmount] = useState("");
+
+    useEffect(() => {
+        const today = new Date().toISOString().split("T")[0];
+        const timer = setTimeout(() => setDate(today), 0);
+        return () => clearTimeout(timer); // ক্লিনআপ
+    }, []);
 
     useEffect(() => {
         fetchWeeklies();

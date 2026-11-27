@@ -8,62 +8,47 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Loader2, Phone, Search, Receipt, Calendar } from "lucide-react";
+import { Plus, Loader2, Phone, Search, Receipt, Calendar, Edit, Trash2 } from "lucide-react";
 
-// ✅ ১. প্রপার টাইপ ডিফাইন করা হলো
-interface FundType {
-  _id: string;
-  name: string;
-}
-
-interface PersonFund {
-  _id: string;
-  fundTypeId: string;
-  assignedAmount: number;
-}
-
+interface FundType { _id: string; name: string; }
+interface PersonFund { _id: string; fundTypeId: string; assignedAmount: number; }
 interface Person {
-  _id: string;
-  name: string;
-  phone: string;
-  funds?: PersonFund[];
-  fundTypeDetails?: FundType[];
-  totalAssigned?: number;
-  totalPaid?: number;
-  totalDue?: number;
+  _id: string; name: string; phone: string; funds?: PersonFund[];
+  fundTypeDetails?: FundType[]; totalAssigned?: number; totalPaid?: number; totalDue?: number;
 }
-
-interface Contribution {
-  _id: string;
-  fundTypeId: string;
-  amount: number;
-  date: string;
-  receiptNo: string;
-}
+interface Contribution { _id: string; fundTypeId: string; amount: number; date: string; receiptNo: string; }
 
 export default function AdminPersonsPage() {
-
-
-  // স্টেটসমূহ (any বাদ দিয়ে সঠিক ইন্টারফেস ব্যবহার)
   const [persons, setPersons] = useState<Person[]>([]);
   const [fundTypes, setFundTypes] = useState<FundType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // নতুন ব্যক্তি মডাল স্টেট
+  // নতুন/এডিট ব্যক্তি মডাল স্টেট
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null); // এডিট ট্র্যাকিং
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [fundAmounts, setFundAmounts] = useState<Record<string, number>>({});
 
-  // বিস্তারিত মডাল স্টেট (Contributions)
+  // বিস্তারিত মডাল স্টেট
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loadingContributions, setLoadingContributions] = useState(false);
-
 
   // টাকা জমা ফর্ম স্টেট
   const [payFundType, setPayFundType] = useState("");
@@ -72,16 +57,13 @@ export default function AdminPersonsPage() {
   const [payReceipt, setPayReceipt] = useState("");
   const [isPaying, setIsPaying] = useState(false);
 
-
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     const timer = setTimeout(() => setPayDate(today), 0);
-    return () => clearTimeout(timer); // ক্লিনআপ
+    return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   async function fetchData() {
     try {
@@ -98,11 +80,21 @@ export default function AdminPersonsPage() {
     }
   }
 
-  // --- নতুন ব্যক্তি যোগ ---
-  const handleOpenDialog = () => {
-    setName("");
-    setPhone("");
-    setFundAmounts({});
+  // --- নতুন ব্যক্তি বা এডিট ওপেন ---
+  const handleOpenDialog = (person: Person | null = null) => {
+    if (person) {
+      setEditingPersonId(person._id);
+      setName(person.name);
+      setPhone(person.phone);
+      const amounts: Record<string, number> = {};
+      person.funds?.forEach((f) => { amounts[f.fundTypeId] = f.assignedAmount; });
+      setFundAmounts(amounts);
+    } else {
+      setEditingPersonId(null);
+      setName("");
+      setPhone("");
+      setFundAmounts({});
+    }
     setIsDialogOpen(true);
   };
 
@@ -110,14 +102,36 @@ export default function AdminPersonsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const fundsData = Object.keys(fundAmounts)
-        .filter((id) => fundAmounts[id] > 0)
-        .map((id) => ({ fundTypeId: id, assignedAmount: fundAmounts[id] }));
+      if (editingPersonId) {
+        // ১. এডিট (নাম ও ফোন আপডেট)
+        await fetchWithAuth(`/api/persons/${editingPersonId}`, {
+          method: "PUT",
+          body: JSON.stringify({ name, phone }),
+        });
 
-      await fetchWithAuth("/api/persons", {
-        method: "POST",
-        body: JSON.stringify({ name, phone, funds: fundsData }),
-      });
+        // ২. ফান্ডের পরিমাণ আপডেট (যদি পরিবর্তন করা হয়)
+        const currentPerson = persons.find((p) => p._id === editingPersonId);
+        if (currentPerson && currentPerson.funds) {
+          for (const f of currentPerson.funds) {
+            if (fundAmounts[f.fundTypeId] !== undefined && fundAmounts[f.fundTypeId] !== f.assignedAmount) {
+              await fetchWithAuth(`/api/persons/funds/${f._id}`, {
+                method: "PUT",
+                body: JSON.stringify({ assignedAmount: fundAmounts[f.fundTypeId] }),
+              });
+            }
+          }
+        }
+      } else {
+        // নতুন তৈরি
+        const fundsData = Object.keys(fundAmounts)
+          .filter((id) => fundAmounts[id] > 0)
+          .map((id) => ({ fundTypeId: id, assignedAmount: fundAmounts[id] }));
+
+        await fetchWithAuth("/api/persons", {
+          method: "POST",
+          body: JSON.stringify({ name, phone, funds: fundsData }),
+        });
+      }
       setIsDialogOpen(false);
       fetchData();
     } catch (error: unknown) {
@@ -125,6 +139,17 @@ export default function AdminPersonsPage() {
       alert(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // --- ডিলিট করা ---
+  const handleDeletePerson = async (id: string) => {
+    try {
+      await fetchWithAuth(`/api/persons/${id}`, { method: "DELETE" });
+      fetchData(); // টেবিল রিফ্রেশ
+    } catch (error) {
+      console.error(error);
+      alert("ডিলিট করতে সমস্যা হয়েছে");
     }
   };
 
@@ -162,18 +187,17 @@ export default function AdminPersonsPage() {
       await fetchWithAuth("/api/contributions", {
         method: "POST",
         body: JSON.stringify({
-          personId: selectedPerson?._id, // ✅ null সেফটি
+          personId: selectedPerson?._id,
           fundTypeId: payFundType,
           amount: Number(payAmount),
           date: payDate,
           receiptNo: payReceipt,
         }),
       });
-      // সফলভাবে জমা হলে
       setPayAmount("");
       setPayReceipt("");
-      if (selectedPerson) fetchContributions(selectedPerson._id); // ✅ null সেফটি
-      fetchData(); // মেইন টেবিলের সামারি রিফ্রেশ
+      if (selectedPerson) fetchContributions(selectedPerson._id);
+      fetchData();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "টাকা জমা দিতে সমস্যা হয়েছে";
       alert(message);
@@ -186,7 +210,7 @@ export default function AdminPersonsPage() {
     if (!confirm("এই জমার রেকর্ডটি ডিলিট করতে চান?")) return;
     try {
       await fetchWithAuth(`/api/contributions/${id}`, { method: "DELETE" });
-      if (selectedPerson) fetchContributions(selectedPerson._id); // ✅ null সেফটি
+      if (selectedPerson) fetchContributions(selectedPerson._id);
       fetchData();
     } catch (error) {
       console.error(error);
@@ -208,13 +232,13 @@ export default function AdminPersonsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button onClick={handleOpenDialog} className="bg-primary text-white" />}>
+          <DialogTrigger render={<Button onClick={() => handleOpenDialog()} className="bg-primary text-white" />}>
             <Plus className="mr-2 h-4 w-4" /> নতুন ব্যক্তি
           </DialogTrigger>
 
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>নতুন ব্যক্তি যোগ করুন</DialogTitle>
+              <DialogTitle>{editingPersonId ? "ব্যক্তি এডিট করুন" : "নতুন ব্যক্তি যোগ করুন"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -280,7 +304,7 @@ export default function AdminPersonsPage() {
                     <TableHead className="text-right">মোট নির্ধারিত</TableHead>
                     <TableHead className="text-right text-green-600">আদায়কৃত</TableHead>
                     <TableHead className="text-right text-red-500">বাকি</TableHead>
-                    <TableHead className="text-right">অ্যাকশন</TableHead>
+                    <TableHead className="text-right w-[180px]">অ্যাকশন</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,15 +336,51 @@ export default function AdminPersonsPage() {
                         <TableCell className="text-right font-medium">{formatTk(person.totalAssigned || 0)}</TableCell>
                         <TableCell className="text-right font-medium text-green-600">{formatTk(person.totalPaid || 0)}</TableCell>
                         <TableCell className="text-right font-bold text-red-500">{formatTk(person.totalDue || 0)}</TableCell>
-                        <TableCell className="text-right">
+                        
+                        {/* অ্যাকশন বাটনসমূহ */}
+                        <TableCell className="text-right space-x-1">
                           <Button
                             onClick={() => handleOpenDetails(person)}
                             variant="outline"
                             size="sm"
-                            className="border-accent text-primary hover:bg-accent hover:text-white"
+                            className="border-primary text-primary hover:bg-primary hover:text-white h-8"
                           >
                             বিস্তারিত
                           </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            onClick={() => handleOpenDialog(person)}
+                          >
+                            <Edit className="h-4 w-4 text-accent" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger render={
+                              <Button variant="destructive" size="icon" className="h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            } />
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>আপনি কি নিশ্চিত?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  <strong>{person.name}</strong> এর সব তথ্য (ফান্ড ও জমার রেকর্ড) স্থায়ীভাবে ডিলিট হয়ে যাবে। এটি আর ফিরিয়ে আনা সম্ভব হবে না।
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>বাতিল করুন</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeletePerson(person._id)} 
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  হ্যাঁ, ডিলিট করুন
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))
@@ -341,10 +401,8 @@ export default function AdminPersonsPage() {
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-
             {/* বাম দিক: ফান্ড সামারি ও টাকা জমার ফর্ম */}
             <div className="space-y-6">
-              {/* ফান্ড সামারি */}
               <div className="space-y-3 bg-secondary/30 p-4 rounded-lg border">
                 <h3 className="font-bold text-primary mb-2">ফান্ডের অবস্থা</h3>
                 {selectedPerson?.funds?.map((f) => {
@@ -369,7 +427,7 @@ export default function AdminPersonsPage() {
                 <h3 className="font-bold text-primary">নতুন টাকা জমা</h3>
                 <div className="space-y-2">
                   <Label>কোন ফান্ডে?</Label>
-                  <Select value={payFundType} onValueChange={setPayFundType} required>
+                  <Select value={payFundType} onValueChange={(val) => setPayFundType(val || "")} required>
                     <SelectTrigger><SelectValue placeholder="ফান্ড সিলেক্ট করুন" /></SelectTrigger>
                     <SelectContent>
                       {selectedPerson?.funds?.map((f) => {
@@ -436,11 +494,9 @@ export default function AdminPersonsPage() {
                 </div>
               )}
             </div>
-
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

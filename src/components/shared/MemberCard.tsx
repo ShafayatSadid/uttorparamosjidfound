@@ -17,7 +17,7 @@ const MemberCard = ({ member }: MemberCardProps) => {
             {/* পুরো কার্ড জুড়ে ছবি */}
             <div className="relative aspect-[4/5] w-full overflow-hidden">
                 <Image
-                    src="/images/furkan.jpeg"
+                    src={member.imageUrl}
                     alt={member.name}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

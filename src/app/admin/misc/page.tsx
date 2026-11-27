@@ -18,7 +18,7 @@ interface Misc {
     purpose?: string;
     receivedBy?: string;
     amount?: number;
-    date?: string; 
+    date?: string;
     createdAt?: string;
 }
 
@@ -34,7 +34,13 @@ export default function AdminMiscPage() {
     const [purpose, setPurpose] = useState("");
     const [receivedBy, setReceivedBy] = useState("");
     const [amount, setAmount] = useState("");
-    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+    const [date, setDate] = useState("");
+
+    useEffect(() => {
+        const today = new Date().toISOString().split("T")[0];
+        const timer = setTimeout(() => setDate(today), 0);
+        return () => clearTimeout(timer); // ক্লিনআপ
+    }, []);
 
     useEffect(() => {
         fetchMiscs();
@@ -67,7 +73,7 @@ export default function AdminMiscPage() {
                 }),
             });
             setIsDialogOpen(false);
-            
+
             // ফর্ম রিসেট
             setDonorName("");
             setPhone("");
@@ -115,12 +121,12 @@ export default function AdminMiscPage() {
 
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     {/* ✅ ৪. DialogTrigger এর রেন্ডার প্রপ ফিক্স */}
-                    <DialogTrigger 
+                    <DialogTrigger
                         render={
                             <Button className="bg-primary text-white">
                                 <Plus className="mr-2 h-4 w-4" /> নতুন দান
                             </Button>
-                        } 
+                        }
                     />
 
                     <DialogContent className="sm:max-w-[500px]">

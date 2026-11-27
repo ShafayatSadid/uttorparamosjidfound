@@ -13,6 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { fetchPublic, fetchWithAuth } from "@/lib/api";
 
 export default function PublicHisabPage() {
     const [persons, setPersons] = useState<any[]>([]);
@@ -21,33 +22,28 @@ export default function PublicHisabPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
+
+
+
+
     useEffect(() => {
-        async function fetchPublicData() {
+        async function fetchMiscs() {
             try {
-                const API_URL = process.env.NEXT_PUBLIC_API_URL;
-                // টোকেন ছাড়া সাধারণ ফেচ
-                const [personsRes, weeklyRes, miscRes] = await Promise.all([
-                    fetch(`${API_URL}/api/persons`),
-                    fetch(`${API_URL}/api/weekly`),
-                    fetch(`${API_URL}/api/misc-donations`),
-                ]);
+                const mdata = await fetchPublic("/api/misc-donations");
+                setMiscs(mdata);
 
-                const [personsData, weeklyData, miscData] = await Promise.all([
-                    personsRes.json(),
-                    weeklyRes.json(),
-                    miscRes.json(),
-                ]);
+                const wdata = await fetchPublic("/api/weekly");
+                setWeeklies(wdata);
 
-                setPersons(personsData);
-                setWeeklies(weeklyData);
-                setMiscs(miscData);
+                const pdata = await fetchPublic("/api/persons");
+                setPersons(pdata);
             } catch (error) {
-                console.error("Failed to fetch public data", error);
+                console.error(error);
             } finally {
                 setLoading(false);
             }
         }
-        fetchPublicData();
+        fetchMiscs()
     }, []);
 
     const formatTk = (amount: number) => new Intl.NumberFormat("bn-BD").format(amount) + " ৳";
@@ -84,41 +80,77 @@ export default function PublicHisabPage() {
                     </TabsList>
 
                     {/* ১. ব্যক্তিভিত্তিক */}
-                    <TabsContent value="persons" className="space-y-4">
-                        <div className="relative w-full max-w-md mx-auto mb-6">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="নাম দিয়ে খুঁজুন..."
-                                className="pl-9 bg-white"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
 
+                    <TabsContent value="persons" className="space-y-4">
                         <Card className="border-primary/10 shadow-sm max-w-7xl mx-auto">
                             <CardContent className="p-0">
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader className="bg-secondary/50">
-                                            <TableRow className=" px-4">
-                                                <TableHead className="font-bold text-primary">নাম</TableHead>
-                                                <TableHead className="font-bold text-primary text-right">নির্ধারিত চাঁদা</TableHead>
+                                            <TableRow>
+                                                {/* নতুন: ক্রমিক নম্বরের হেডার */}
+                                                <TableHead className="font-bold text-primary w-[50px] text-center">ক্রম</TableHead>
+                                                <TableHead className="font-bold text-primary w-[200px]">নাম</TableHead>
+                                                <TableHead className="font-bold text-primary min-w-[300px]">ফান্ডের বিবরণ</TableHead>
+                                                <TableHead className="font-bold text-primary text-right">মোট নির্ধারিত</TableHead>
+                                                <TableHead className="font-bold text-primary text-right">মোট আদায়</TableHead>
+                                                <TableHead className="font-bold text-primary text-right">মোট বাকি</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {filteredPersons.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={2} className="text-center h-24 text-muted-foreground">কোনো তথ্য পাওয়া যায়নি।</TableCell>
+                                                    {/* colSpan 5 থেকে 6 করা হলো */}
+                                                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">কোনো তথ্য পাওয়া যায়নি।</TableCell>
                                                 </TableRow>
                                             ) : (
-                                                filteredPersons.map((person) => {
-                                                    const assigned = person.funds?.reduce((acc: number, f: any) => acc + f.assignedAmount, 0) || 0;
+                                                // map এ index যুক্ত করা হলো
+                                                filteredPersons.map((person, index) => {
+                                                    const totalAssigned = person.totalAssigned || person.funds?.reduce((acc: number, f: any) => acc + f.assignedAmount, 0) || 0;
+                                                    const totalPaid = person.totalPaid || person.contributions?.reduce((acc: number, c: any) => acc + c.amount, 0) || 0;
+                                                    const totalDue = person.totalDue !== undefined ? person.totalDue : (totalAssigned - totalPaid);
+
                                                     return (
-                                                        <TableRow key={person._id}>
-                                                            <TableCell>
+                                                        <TableRow key={person._id} className="hover:bg-slate-50/50">
+                                                            {/* নতুন: ক্রমিক নম্বর */}
+                                                            <TableCell className="text-center align-top pt-4 font-medium text-muted-foreground">
+                                                                {index + 1}
+                                                            </TableCell>
+
+                                                            <TableCell className="align-top pt-4">
                                                                 <div className="font-semibold text-primary">{person.name}</div>
                                                             </TableCell>
-                                                            <TableCell className="text-right font-medium">{formatTk(assigned)}</TableCell>
+
+                                                            <TableCell className="align-top pt-4">
+                                                                <div className="space-y-2">
+                                                                    {person.funds?.map((f: any) => {
+                                                                        const fundName = person.fundTypeDetails?.find((ft: any) => ft._id === f.fundTypeId)?.name || "ফান্ড";
+                                                                        const paidForFund = person.contributions?.filter((c: any) => c.fundTypeId === f.fundTypeId).reduce((sum: number, c: any) => sum + c.amount, 0) || 0;
+                                                                        const dueForFund = f.assignedAmount - paidForFund;
+
+                                                                        return (
+                                                                            <div key={f._id} className="text-sm border-l-2 border-primary/30 pl-3 py-1.5 bg-slate-50 rounded-r-md">
+                                                                                <span className="font-semibold text-primary block text-xs mb-0.5">{fundName}</span>
+                                                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
+                                                                                    <span className="text-muted-foreground">নির্ধারিত: <strong className="text-slate-700">{formatTk(f.assignedAmount)}</strong></span>
+                                                                                    <span className="text-green-600">আদায়: <strong>{formatTk(paidForFund)}</strong></span>
+                                                                                    <span className="text-red-500">বাকি: <strong>{formatTk(dueForFund)}</strong></span>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </TableCell>
+
+                                                            <TableCell className="text-right align-top pt-4 font-semibold text-primary">
+                                                                {formatTk(totalAssigned)}
+                                                            </TableCell>
+                                                            <TableCell className="text-right align-top pt-4 font-semibold text-green-600">
+                                                                {formatTk(totalPaid)}
+                                                            </TableCell>
+                                                            <TableCell className="text-right align-top pt-4 font-bold text-red-500">
+                                                                {formatTk(totalDue)}
+                                                            </TableCell>
                                                         </TableRow>
                                                     );
                                                 })
@@ -137,13 +169,17 @@ export default function PublicHisabPage() {
                                 <Table>
                                     <TableHeader className="bg-secondary/50">
                                         <TableRow className="px-4">
+                                            <TableHead className="font-bold text-primary w-[50px] text-center">ক্রম</TableHead>
                                             <TableHead className="font-bold text-primary">তারিখ</TableHead>
                                             <TableHead className="font-bold text-primary text-right">পরিমাণ</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {weeklies.map((w) => (
+                                        {weeklies.map((w, index) => (
                                             <TableRow key={w._id}>
+                                                <TableCell className="text-center align-top pt-4 font-medium text-muted-foreground">
+                                                    {index + 1}
+                                                </TableCell>
                                                 <TableCell>{new Date(w.date).toLocaleDateString("bn-BD")}</TableCell>
                                                 <TableCell className="text-right font-medium text-green-600">{formatTk(w.amount)}</TableCell>
                                             </TableRow>
@@ -162,6 +198,7 @@ export default function PublicHisabPage() {
                                     <Table>
                                         <TableHeader className="bg-secondary/50">
                                             <TableRow className="px-4">
+                                                <TableHead className="font-bold text-primary w-[50px] text-center">ক্রম</TableHead>
                                                 <TableHead className="font-bold text-primary">তারিখ</TableHead>
                                                 <TableHead className="font-bold text-primary">দাতার নাম</TableHead>
                                                 <TableHead className="font-bold text-primary">উদ্দেশ্য</TableHead>
@@ -169,8 +206,11 @@ export default function PublicHisabPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {miscs.map((m) => (
+                                            {miscs.map((m,index) => (
                                                 <TableRow key={m._id}>
+                                                    <TableCell className="text-center align-top pt-4 font-medium text-muted-foreground">
+                                                                {index + 1}
+                                                            </TableCell>
                                                     <TableCell>{new Date(m.date).toLocaleDateString("bn-BD")}</TableCell>
                                                     <TableCell className="font-semibold">{m.donorName}</TableCell>
                                                     <TableCell>{m.purpose}</TableCell>
